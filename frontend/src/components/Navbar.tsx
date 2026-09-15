@@ -43,15 +43,15 @@ export default function Navbar() {
               <LayoutDashboard className="w-4 h-4" />
               <span>Dashboard</span>
             </Link>
-            <Link href="/#rag-chat" className="flex items-center space-x-2 text-slate-300 hover:text-cyan-400 transition-colors">
+            <Link href="/" className="flex items-center space-x-2 text-slate-300 hover:text-cyan-400 transition-colors">
               <Bot className="w-4 h-4" />
               <span>RAG Chatbot</span>
             </Link>
-            <Link href="/#documents" className="flex items-center space-x-2 text-slate-300 hover:text-cyan-400 transition-colors">
+            <Link href="/documents" className="flex items-center space-x-2 text-slate-300 hover:text-cyan-400 transition-colors">
               <FileText className="w-4 h-4" />
               <span>Documents</span>
             </Link>
-            <Link href="/#tasks" className="flex items-center space-x-2 text-slate-300 hover:text-cyan-400 transition-colors">
+            <Link href="/tasks" className="flex items-center space-x-2 text-slate-300 hover:text-cyan-400 transition-colors">
               <CheckSquare className="w-4 h-4" />
               <span>Tasks</span>
             </Link>
