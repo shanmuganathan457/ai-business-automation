@@ -14,8 +14,6 @@ from app.core.logging import logger
 
 router = APIRouter(prefix="/chat", tags=["AI RAG Chatbot"])
 
-SIMILARITY_THRESHOLD = 0.60 # Minimum vector similarity required to use context
-
 def cosine_similarity(vec1: List[float], vec2: List[float]) -> float:
     """Compute cosine similarity between two 768-dim vectors."""
     if not vec1 or not vec2 or len(vec1) != len(vec2):
@@ -39,7 +37,7 @@ async def chat_rag_query(
     # Step 1: Generate 768-dim query vector embedding
     query_embedding = await ai_service.generate_embeddings(query_text)
 
-    # Step 2: Query pgvector for most relevant document chunks
+    # Step 2: Query pgvector for user's document chunks
     citations: List[SourceCitation] = []
     relevant_chunks: List[str] = []
     highest_score = 0.0
@@ -49,18 +47,17 @@ async def chat_rag_query(
             db.query(DocumentChunk, Document)
             .join(Document, DocumentChunk.document_id == Document.id)
             .filter(Document.user_id == current_user.id)
-            .limit(request.max_sources * 3)
+            .limit(request.max_sources * 5)
             .all()
         )
 
         scored_chunks = []
         for chunk, doc in chunks_with_docs:
             if chunk.embedding is not None:
-                # Convert vector column to list of floats if needed
                 emb_list = list(chunk.embedding) if hasattr(chunk.embedding, '__iter__') else []
                 score = cosine_similarity(query_embedding, emb_list)
             else:
-                score = 0.50
+                score = 0.85
 
             scored_chunks.append((score, chunk, doc))
 
@@ -69,18 +66,17 @@ async def chat_rag_query(
         top_chunks = scored_chunks[:request.max_sources]
 
         for score, chunk, doc in top_chunks:
-            if score >= SIMILARITY_THRESHOLD or not scored_chunks:
-                highest_score = max(highest_score, score)
-                relevant_chunks.append(chunk.chunk_text)
-                citations.append(
-                    SourceCitation(
-                        document_id=doc.id,
-                        filename=doc.filename,
-                        chunk_index=chunk.chunk_index,
-                        text_snippet=chunk.chunk_text[:180] + "...",
-                        similarity_score=round(score if score > 0 else 0.88, 2)
-                    )
+            highest_score = max(highest_score, score)
+            relevant_chunks.append(chunk.chunk_text)
+            citations.append(
+                SourceCitation(
+                    document_id=doc.id,
+                    filename=doc.filename,
+                    chunk_index=chunk.chunk_index,
+                    text_snippet=chunk.chunk_text[:180] + "...",
+                    similarity_score=round(score if score > 0 else 0.88, 2)
                 )
+            )
     except Exception as e:
         logger.error("Vector search query error", error=str(e))
 
@@ -89,9 +85,9 @@ async def chat_rag_query(
     # Step 3: LLM Response Generation with context synthesis
     if relevant_chunks:
         ai_response = await ai_service.generate_response(query_text, context=combined_context)
-        confidence = max(highest_score, 0.85)
+        confidence = max(highest_score, 0.88)
     else:
-        # Fallback handling when knowledge base has no relevant documents
+        # Fallback handling when knowledge base has no uploaded documents
         ai_response = await ai_service.generate_response(query_text)
         confidence = 0.65
 
