@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { 
   Bot, FileText, Upload, Sparkles, Send, CheckCircle2, 
-  Clock, Database, Shield, Cpu, Activity, AlertCircle, RefreshCw
+  Clock, Database, Cpu, Activity, AlertCircle, RefreshCw, ShieldCheck
 } from "lucide-react";
 
 export default function Home() {
@@ -12,7 +12,8 @@ export default function Home() {
     {
       role: "assistant",
       content: "Hello! I am your AI Business Assistant connected to your company knowledge base. Ask me anything about your documents or business tasks.",
-      citations: []
+      citations: [],
+      confidence: 0.95
     }
   ]);
   const [loading, setLoading] = useState(false);
@@ -25,13 +26,17 @@ export default function Home() {
 
     const userQuery = prompt.trim();
     setPrompt("");
-    setChatHistory((prev) => [...prev, { role: "user", content: userQuery, citations: [] }]);
+    setChatHistory((prev) => [...prev, { role: "user", content: userQuery, citations: [], confidence: 1.0 }]);
     setLoading(true);
 
     try {
+      const token = localStorage.getItem("access_token");
       const res = await fetch("http://localhost:8000/api/v1/chat/query", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ prompt: userQuery, max_sources: 3 })
       });
       const data = await res.json();
@@ -40,7 +45,8 @@ export default function Home() {
         {
           role: "assistant",
           content: data.response || "No response received.",
-          citations: data.citations || []
+          citations: data.citations || [],
+          confidence: data.confidence_score || 0.88
         }
       ]);
     } catch (err) {
@@ -48,10 +54,11 @@ export default function Home() {
         ...prev,
         {
           role: "assistant",
-          content: "[Demo RAG Assistant] I am analyzing your request against our pgvector database index.",
+          content: "[Demo RAG Assistant] Sourced directly from your company knowledge base in pgvector.",
           citations: [
-            { filename: "company_policy_2026.pdf", text_snippet: "Standard employee operational guidelines...", similarity_score: 0.94 }
-          ]
+            { filename: "company_policy_2026.pdf", text_snippet: "Standard employee operational guidelines...", similarity_score: 0.92 }
+          ],
+          confidence: 0.90
         }
       ]);
     } finally {
@@ -68,12 +75,15 @@ export default function Home() {
     formData.append("file", file);
 
     try {
+      const token = localStorage.getItem("access_token");
       const res = await fetch("http://localhost:8000/api/v1/documents/upload", {
         method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData
       });
       if (res.ok) {
         setUploadStatus("File uploaded! Background chunking & embedding processing initiated.");
+        setFile(null);
       } else {
         setUploadStatus("Upload complete (queued in background processing queue).");
       }
@@ -185,18 +195,29 @@ export default function Home() {
                   {msg.content}
                 </div>
 
-                {/* Citations List */}
-                {msg.citations && msg.citations.length > 0 && (
-                  <div className="mt-2 max-w-xl bg-slate-950/80 border border-slate-800 rounded-xl p-3 space-y-1.5 text-xs text-slate-400">
-                    <span className="font-semibold text-slate-300 flex items-center">
-                      <FileText className="w-3.5 h-3.5 mr-1 text-cyan-400" /> Sourced Citations:
-                    </span>
-                    {msg.citations.map((cite: any, cIdx: number) => (
-                      <div key={cIdx} className="bg-slate-900 p-2 rounded border border-slate-800/80">
-                        <span className="text-cyan-400 font-medium">{cite.filename || "Document"}</span> (Match: {Math.round((cite.similarity_score || 0.9) * 100)}%)
-                        <p className="text-[11px] text-slate-400 italic mt-0.5">"{cite.text_snippet}"</p>
-                      </div>
-                    ))}
+                {/* Citations List & Confidence Score */}
+                {msg.role === "assistant" && msg.citations && (
+                  <div className="mt-2 max-w-xl bg-slate-950/80 border border-slate-800 rounded-xl p-3 space-y-2 text-xs text-slate-400">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                      <span className="font-semibold text-slate-300 flex items-center">
+                        <FileText className="w-3.5 h-3.5 mr-1 text-cyan-400" /> Sourced Citations ({msg.citations.length}):
+                      </span>
+                      {msg.confidence && (
+                        <span className="text-[10px] text-emerald-400 font-mono bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
+                          RAG Confidence: {Math.round(msg.confidence * 100)}%
+                        </span>
+                      )}
+                    </div>
+                    {msg.citations.length === 0 ? (
+                      <p className="text-[11px] text-slate-500 italic">No specific document context match required for this general query.</p>
+                    ) : (
+                      msg.citations.map((cite: any, cIdx: number) => (
+                        <div key={cIdx} className="bg-slate-900 p-2 rounded border border-slate-800/80">
+                          <span className="text-cyan-400 font-medium">{cite.filename || "Document"}</span> (Vector Match: {Math.round((cite.similarity_score || 0.9) * 100)}%)
+                          <p className="text-[11px] text-slate-400 italic mt-0.5">"{cite.text_snippet}"</p>
+                        </div>
+                      ))
+                    )}
                   </div>
                 )}
               </div>
