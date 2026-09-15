@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Bot, FileText, LayoutDashboard, CheckSquare, ShieldCheck, LogIn, LogOut, UserPlus } from "lucide-react";
 
 export default function Navbar() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       try {
@@ -21,7 +24,7 @@ export default function Navbar() {
     localStorage.removeItem("access_token");
     localStorage.removeItem("user");
     setUser(null);
-    window.location.href = "/login";
+    router.push("/login");
   };
 
   return (
@@ -32,32 +35,34 @@ export default function Navbar() {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/20">
               <Bot className="w-6 h-6" />
             </div>
-            <a href="/" className="font-bold text-xl tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+            <Link href="/" className="font-bold text-xl tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
               NexusAI <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Enterprise</span>
-            </a>
+            </Link>
           </div>
 
           <div className="flex items-center space-x-6 text-sm font-medium">
-            <a href="/" className="flex items-center space-x-2 text-slate-300 hover:text-cyan-400 transition-colors">
+            <Link href="/" className="flex items-center space-x-2 text-slate-300 hover:text-cyan-400 transition-colors">
               <LayoutDashboard className="w-4 h-4" />
               <span>Dashboard</span>
-            </a>
-            <a href="/#rag-chatbot" className="flex items-center space-x-2 text-slate-300 hover:text-cyan-400 transition-colors">
+            </Link>
+            <Link href="/#rag-chatbot" className="flex items-center space-x-2 text-slate-300 hover:text-cyan-400 transition-colors">
               <Bot className="w-4 h-4" />
               <span>RAG Chatbot</span>
-            </a>
-            <a href="/documents" className="flex items-center space-x-2 text-slate-300 hover:text-cyan-400 transition-colors">
+            </Link>
+            <Link href="/documents" className="flex items-center space-x-2 text-slate-300 hover:text-cyan-400 transition-colors">
               <FileText className="w-4 h-4" />
               <span>Documents</span>
-            </a>
-            <a href="/tasks" className="flex items-center space-x-2 text-slate-300 hover:text-cyan-400 transition-colors">
+            </Link>
+            <Link href="/tasks" className="flex items-center space-x-2 text-slate-300 hover:text-cyan-400 transition-colors">
               <CheckSquare className="w-4 h-4" />
               <span>Tasks</span>
-            </a>
+            </Link>
           </div>
 
           <div className="flex items-center space-x-3">
-            {user ? (
+            {!mounted ? (
+              <div className="w-28 h-8 bg-slate-800/60 rounded-lg animate-pulse" />
+            ) : user ? (
               <div className="flex items-center space-x-3">
                 <div className="flex items-center space-x-2 text-xs bg-slate-800/80 border border-slate-700 px-3 py-1.5 rounded-lg text-slate-300">
                   <ShieldCheck className="w-4 h-4 text-emerald-400" />
@@ -73,20 +78,20 @@ export default function Navbar() {
               </div>
             ) : (
               <div className="flex items-center space-x-2">
-                <a
+                <Link
                   href="/login"
                   className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition"
                 >
                   <LogIn className="w-3.5 h-3.5" />
                   <span>Login</span>
-                </a>
-                <a
+                </Link>
+                <Link
                   href="/register"
                   className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 rounded-lg transition shadow-md shadow-cyan-500/20"
                 >
                   <UserPlus className="w-3.5 h-3.5" />
                   <span>Register</span>
-                </a>
+                </Link>
               </div>
             )}
           </div>
