@@ -162,7 +162,7 @@ export default function Home() {
       {/* Main Grid: RAG Chatbot & Document Upload */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* RAG Chatbot Column (2 cols) */}
-        <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col h-[600px] shadow-xl overflow-hidden">
+        <div id="rag-chatbot" className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col h-[600px] shadow-xl overflow-hidden scroll-mt-20">
           <div className="px-6 py-4 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center">

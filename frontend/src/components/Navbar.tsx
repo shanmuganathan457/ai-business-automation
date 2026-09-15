@@ -42,7 +42,7 @@ export default function Navbar() {
               <LayoutDashboard className="w-4 h-4" />
               <span>Dashboard</span>
             </a>
-            <a href="/" className="flex items-center space-x-2 text-slate-300 hover:text-cyan-400 transition-colors">
+            <a href="/#rag-chatbot" className="flex items-center space-x-2 text-slate-300 hover:text-cyan-400 transition-colors">
               <Bot className="w-4 h-4" />
               <span>RAG Chatbot</span>
             </a>
