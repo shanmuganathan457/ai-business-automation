@@ -61,6 +61,10 @@ services:
       - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
     ports:
       - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
     depends_on:
       backend:
         condition: service_healthy
